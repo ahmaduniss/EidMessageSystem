@@ -1,0 +1,41 @@
+from typing import List
+from deep_translator import GoogleTranslator
+from twilio.rest import Client
+
+def extract_names_from_vcard(file):
+    names = []
+    for line in file:
+        if line.startswith("FN:"):
+            name = line.strip().split(':', 1)[1]
+            names.append(name)
+    return names
+
+def translate_names_to_arabic(names: List[str]) -> List[str]:
+    translator = GoogleTranslator(source='en', target='ar')
+    arabic_names = [translator.translate(name) for name in names]
+    reversed_arabic_names = [name[::-1] for name in arabic_names]
+    return reversed_arabic_names
+
+def send_whatsapp_message(to, message, account_sid, auth_token, from_whatsapp_number):
+    client = Client(account_sid, auth_token)
+    to_whatsapp_number = f'whatsapp:{to}'
+    client.messages.create(body=message, from_=from_whatsapp_number, to=to_whatsapp_number)
+
+def main():
+    account_sid = '######'
+    auth_token = '######'
+    from_whatsapp_number = 'whatsapp:+14155238886' 
+
+    with open('Favorites.vcf', 'r') as file:
+        names = extract_names_from_vcard(file)
+        arabic_names = translate_names_to_arabic(names)
+
+        print("Original Names:", names)
+        print("Arabic Names:", arabic_names)
+
+        for name, arabic_name in zip(names, arabic_names):
+            message = f"Hello {arabic_name}, كل عام وانت بخير "
+            send_whatsapp_message('+962790063572', message, account_sid, auth_token, from_whatsapp_number)
+
+if __name__ == '__main__':
+    main()
